@@ -1,40 +1,16 @@
 import { Container } from '../container';
-import { HttpResponseInit, HttpRequest, InvocationContext } from '@azure/functions';
-import { webhookCallback } from 'grammy';
-import buildBot from '../bot';
+import { HttpResponseInit, HttpRequest } from '@azure/functions';
 
 export function makeWebhookHandler(container: Container) {
-  return async function webhook(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  return async function webhook(request: HttpRequest): Promise<HttpResponseInit> {
     try {
-      const bot = buildBot(container);
-
       const rawBody = await request.json();
 
-      const modifiedRequest = {
-        ...request,
-        body: rawBody,
-      };
+      await container.queueProvider.sendMessage(JSON.stringify(rawBody));
 
-      const handleUpdate = webhookCallback(bot, 'azure');
-
-      return await new Promise<HttpResponseInit>((resolve, reject) => {
-        const replyAdapter = {
-          res: {
-            status: 200,
-            body: '',
-            send: (data: unknown) => {
-              context.log('data:', data);
-              resolve({ body: data as HttpResponseInit['body'] });
-            },
-          },
-        };
-
-        handleUpdate(modifiedRequest, replyAdapter)
-          .then(() => resolve({ body: 'ok' }))
-          .catch(reject);
-      });
+      return { status: 200, body: 'accepted' };
     } catch (error) {
-      container.exceptionProvider.captureException(error, 'Failed to process telegram webhook.');
+      container.exceptionProvider.captureException(error, 'Failed to receive telegram webhook.');
 
       throw error;
     }
