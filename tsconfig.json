@@ -26,6 +26,7 @@
   ],
   "exclude": [
     "node_modules/**/*",
-    ".vscode/**/*"
+    ".vscode/**/*",
+    "**/*.test.ts"
   ]
 }
