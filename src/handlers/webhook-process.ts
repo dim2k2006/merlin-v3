@@ -7,12 +7,7 @@ const queueItemSchema = z.object({
   chatId: z.string(),
   message: z.string(),
   threadId: z.string(),
-  user: z.object({
-    id: z.string(),
-    externalId: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-  }),
+  userId: z.string(),
 });
 
 export function makeWebhookProcessHandler(container: Container) {
@@ -20,7 +15,9 @@ export function makeWebhookProcessHandler(container: Container) {
     try {
       context.log('Processing update from queue:', queueItem);
 
-      const { chatId, message, threadId, user } = queueItemSchema.parse(queueItem);
+      const { chatId, message, threadId, userId } = queueItemSchema.parse(queueItem);
+
+      const user = await container.userService.getUserById(userId);
 
       try {
         const agentResponse = await container.agentProvider.invoke(

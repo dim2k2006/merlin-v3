@@ -114,7 +114,9 @@ function buildBot(container: Container) {
 
     const chatId = ctx.chatId;
 
-    await container.queueProvider.sendMessage(JSON.stringify({ chatId: toString(chatId), message, threadId, user }));
+    await container.queueProvider.sendMessage(
+      JSON.stringify({ chatId: toString(chatId), message, threadId, userId: user.id }),
+    );
 
     await ctx.react('👀');
   });
