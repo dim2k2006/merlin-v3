@@ -1,5 +1,4 @@
 import { Bot, Context, NextFunction } from 'grammy';
-import get from 'lodash/get';
 import toString from 'lodash/toString';
 import { Container } from '../container';
 
