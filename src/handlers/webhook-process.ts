@@ -6,18 +6,12 @@ import buildBot from '../bot';
 export function makeWebhookProcessHandler(container: Container) {
   return async function webhookProcess(queueItem: unknown, context: InvocationContext): Promise<void> {
     try {
-      const message = queueItem as string;
-
-      const decoded = Buffer.from(message, 'base64').toString('utf8');
-
-      const update = JSON.parse(decoded);
-
-      context.log('Processing update from queue:', update);
+      context.log('Processing update from queue:', queueItem);
 
       const bot = buildBot(container);
 
       const request = {
-        body: update,
+        body: queueItem,
       };
 
       const replyAdapter = {
