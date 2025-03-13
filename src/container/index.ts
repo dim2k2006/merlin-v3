@@ -1,9 +1,10 @@
+import { CosmosClient } from '@azure/cosmos';
 import { EmbeddingProvider, EmbeddingProviderOpenAI } from '../providers/embedding';
 import { LlmProvider, LlmProviderOpenai } from '../providers/llm';
 import { AgentProvider, AgentProviderLangGraph } from '../providers/agent';
 import { ParameterProvider, ParameterProviderCorrelate } from '../providers/parameter';
 import { ChatProvider, ChatProviderTelegram } from '../providers/chat';
-import { UserRepositorySupabase, UserService, UserServiceImpl } from '../domain/user';
+import { UserRepositoryCosmosDb, UserService, UserServiceImpl } from '../domain/user';
 import { MemoryRepositoryPinecone, MemoryService, MemoryServiceImpl } from '../domain/memory';
 
 function getEnvVariable(name: string): string {
@@ -15,8 +16,8 @@ function getEnvVariable(name: string): string {
 }
 
 export function buildConfig(): Config {
-  const supabaseUrl = getEnvVariable('SUPABASE_URL');
-  const supabaseKey = getEnvVariable('SUPABASE_KEY');
+  const cosmosDbEndpoint = getEnvVariable('COSMOS_DB_ENDPOINT');
+  const cosmosDbKey = getEnvVariable('COSMOS_DB_KEY');
   const pineconeApiKey = getEnvVariable('PINECONE_API_KEY');
   const openaiApiKey = getEnvVariable('OPENAI_API_KEY');
   const telegramBotToken = getEnvVariable('TELEGRAM_BOT_TOKEN');
@@ -25,8 +26,9 @@ export function buildConfig(): Config {
   const correlateWebAppUrl = getEnvVariable('CORRELATE_WEB_APP_URL');
 
   return {
-    supabaseUrl,
-    supabaseKey,
+    cosmosDbEndpoint,
+    cosmosDbKey,
+    cosmosDbName: 'merlin',
     pineconeApiKey,
     pineconeNamespace: 'ns1',
     pineconeIndexName: 'merlin',
@@ -40,8 +42,9 @@ export function buildConfig(): Config {
 }
 
 export type Config = {
-  supabaseUrl: string;
-  supabaseKey: string;
+  cosmosDbEndpoint: string;
+  cosmosDbKey: string;
+  cosmosDbName: string;
   pineconeApiKey: string;
   pineconeNamespace: string;
   pineconeIndexName: string;
@@ -54,12 +57,14 @@ export type Config = {
 };
 
 export function buildContainer(config: Config): Container {
+  const cosmosClient = new CosmosClient({ endpoint: config.cosmosDbEndpoint, key: config.cosmosDbKey });
+  const cosmosDatabase = cosmosClient.database(config.cosmosDbName);
+
   const embeddingProvider = new EmbeddingProviderOpenAI({ apiKey: config.openaiApiKey });
   const llmProvider = new LlmProviderOpenai({ apiKey: config.openaiApiKey });
 
-  const userRepository = new UserRepositorySupabase({
-    supabaseUrl: config.supabaseUrl,
-    supabaseKey: config.supabaseKey,
+  const userRepository = new UserRepositoryCosmosDb({
+    container: cosmosDatabase.container('Users'),
   });
   const userService = new UserServiceImpl({ userRepository });
 
