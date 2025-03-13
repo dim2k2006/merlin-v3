@@ -29,7 +29,9 @@ export function makeWebhookHandler(container: Container) {
           },
         };
 
-        handleUpdate(modifiedRequest, replyAdapter).catch(reject);
+        handleUpdate(modifiedRequest, replyAdapter)
+          .then(() => resolve({ body: 'ok' }))
+          .catch(reject);
       });
     } catch (error) {
       container.exceptionProvider.captureException(error, 'Failed to process telegram webhook.');
