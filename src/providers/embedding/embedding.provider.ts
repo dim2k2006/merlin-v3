@@ -1,1 +1,1 @@
-export { EmbeddingProvider, CreateEmbeddingInput, Embedding } from '../../shared/embedding.types';
+export type { EmbeddingProvider, CreateEmbeddingInput, Embedding } from '../../shared/embedding.types';

@@ -1,2 +1,2 @@
-export { ParameterProvider } from './parameter.provider';
+export type { ParameterProvider } from './parameter.provider';
 export { default as ParameterProviderCorrelate } from './parameter.provider.correlate';
