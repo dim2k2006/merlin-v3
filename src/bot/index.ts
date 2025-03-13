@@ -132,6 +132,12 @@ Please generate a clear, concise answer to the user's query. At the end of your 
 
       const replyMessage = agentResponse.messages[agentResponse.messages.length - 1];
 
+      if (!replyMessage) {
+        await ctx.reply('I do not understand what you are saying. 😔');
+
+        return;
+      }
+
       await ctx.reply(replyMessage.content);
     } catch (error) {
       const errorMessage = get(error, 'message', 'An error occurred.');
@@ -155,6 +161,12 @@ At the end, add a line "Tools Used:" and list any tools that were involved in ha
       );
 
       const replyMessage = agentResponse.messages[agentResponse.messages.length - 1];
+
+      if (!replyMessage) {
+        await ctx.reply('An error occurred.');
+
+        return;
+      }
 
       await ctx.reply(replyMessage.content);
     }
