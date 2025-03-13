@@ -1,5 +1,6 @@
 import { Bot, Context, NextFunction } from 'grammy';
 import get from 'lodash/get';
+import toString from 'lodash/toString';
 import { Container } from '../container';
 
 function buildBot(container: Container) {
@@ -111,6 +112,12 @@ function buildBot(container: Container) {
     }
 
     const threadId = ctx.from.id.toString() || 'default-thread';
+
+    const chatId = ctx.chatId;
+
+    await container.queueProvider.sendMessage(JSON.stringify({ chatId: toString(chatId), message, threadId, user }));
+
+    await ctx.react('👀');
 
     try {
       const agentResponse = await container.agentProvider.invoke(
