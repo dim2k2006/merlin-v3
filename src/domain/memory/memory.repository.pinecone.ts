@@ -51,7 +51,7 @@ class MemoryRepositoryPinecone implements MemoryRepository {
         id: match.id,
         userId: match.metadata?.userId ?? '',
         content: match.metadata?.content ?? '',
-        embeddingVector: match.values,
+        embeddingVector: match.values ?? [],
         metadata: match.metadata,
         createdAt: match.metadata?.createdAt ?? '',
       };
