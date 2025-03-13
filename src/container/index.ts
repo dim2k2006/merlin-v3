@@ -4,6 +4,7 @@ import { LlmProvider, LlmProviderOpenai } from '../providers/llm';
 import { AgentProvider, AgentProviderLangGraph } from '../providers/agent';
 import { ParameterProvider, ParameterProviderCorrelate } from '../providers/parameter';
 import { ChatProvider, ChatProviderTelegram } from '../providers/chat';
+import { ExceptionProvider, ExceptionProviderSentry } from '../providers/exception';
 import { UserRepositoryCosmosDb, UserService, UserServiceImpl } from '../domain/user';
 import { MemoryRepositoryPinecone, MemoryService, MemoryServiceImpl } from '../domain/memory';
 
@@ -85,6 +86,8 @@ export function buildContainer(config: Config): Container {
 
   const chatProvider = new ChatProviderTelegram({ botToken: config.telegramBotToken });
 
+  const exceptionProvider = new ExceptionProviderSentry();
+
   return {
     config,
     userService,
@@ -94,6 +97,7 @@ export function buildContainer(config: Config): Container {
     agentProvider,
     parameterProvider,
     chatProvider,
+    exceptionProvider,
   };
 }
 
@@ -106,4 +110,5 @@ export type Container = {
   agentProvider: AgentProvider;
   parameterProvider: ParameterProvider;
   chatProvider: ChatProvider;
+  exceptionProvider: ExceptionProvider;
 };
