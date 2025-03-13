@@ -16,12 +16,14 @@ function getEnvVariable(name: string): string {
 }
 
 export function buildConfig(): Config {
+  const nodeEnv = getEnvVariable('NODE_ENV');
   const cosmosDbEndpoint = getEnvVariable('COSMOS_DB_ENDPOINT');
   const cosmosDbKey = getEnvVariable('COSMOS_DB_KEY');
   const pineconeApiKey = getEnvVariable('PINECONE_API_KEY');
   const openaiApiKey = getEnvVariable('OPENAI_API_KEY');
   const telegramBotToken = getEnvVariable('TELEGRAM_BOT_TOKEN');
   const sentryDsn = getEnvVariable('SENTRY_DSN');
+  const sentryEnabled = nodeEnv === 'production';
   const correlateApiKey = getEnvVariable('CORRELATE_API_KEY');
   const correlateWebAppUrl = getEnvVariable('CORRELATE_WEB_APP_URL');
 
@@ -36,6 +38,7 @@ export function buildConfig(): Config {
     telegramBotToken,
     allowedTelegramUserIds: [284307817, 263786736],
     sentryDsn,
+    sentryEnabled,
     correlateApiKey,
     correlateWebAppUrl,
   };
@@ -52,6 +55,7 @@ export type Config = {
   telegramBotToken: string;
   allowedTelegramUserIds: number[];
   sentryDsn: string;
+  sentryEnabled: boolean;
   correlateApiKey: string;
   correlateWebAppUrl: string;
 };
