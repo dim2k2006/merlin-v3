@@ -19,6 +19,7 @@ function getEnvVariable(name: string): string {
 export function buildConfig(): Config {
   const nodeEnv = getEnvVariable('NODE_ENV');
   const storageConnectionString = getEnvVariable('AZURE_STORAGE_CONNECTION_STRING');
+  const queueName = getEnvVariable('AZURE_STORAGE_QUEUE_NAME');
   const cosmosDbEndpoint = getEnvVariable('COSMOS_DB_ENDPOINT');
   const cosmosDbKey = getEnvVariable('COSMOS_DB_KEY');
   const pineconeApiKey = getEnvVariable('PINECONE_API_KEY');
@@ -31,6 +32,7 @@ export function buildConfig(): Config {
 
   return {
     storageConnectionString,
+    queueName,
     cosmosDbEndpoint,
     cosmosDbKey,
     cosmosDbName: 'merlin',
@@ -49,6 +51,7 @@ export function buildConfig(): Config {
 
 export type Config = {
   storageConnectionString: string;
+  queueName: string;
   cosmosDbEndpoint: string;
   cosmosDbKey: string;
   cosmosDbName: string;
