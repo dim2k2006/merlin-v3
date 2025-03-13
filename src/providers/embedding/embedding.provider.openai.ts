@@ -21,8 +21,14 @@ class EmbeddingProviderOpenAI implements EmbeddingProvider {
       encoding_format: 'float',
     });
 
+    const data = response.data[0];
+
+    if (!data) {
+      throw new Error('Failed to create embedding.');
+    }
+
     return {
-      embedding: response.data[0].embedding,
+      embedding: data.embedding,
     };
   }
 }
