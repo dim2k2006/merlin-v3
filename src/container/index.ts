@@ -1,10 +1,12 @@
 import { CosmosClient } from '@azure/cosmos';
+import { QueueServiceClient } from '@azure/storage-queue';
 import { EmbeddingProvider, EmbeddingProviderOpenAI } from '../providers/embedding';
 import { LlmProvider, LlmProviderOpenai } from '../providers/llm';
 import { AgentProvider, AgentProviderLangGraph } from '../providers/agent';
 import { ParameterProvider, ParameterProviderCorrelate } from '../providers/parameter';
 import { ChatProvider, ChatProviderTelegram } from '../providers/chat';
 import { ExceptionProvider, ExceptionProviderSentry } from '../providers/exception';
+import { QueueProvider, QueueProviderAzure } from '../providers/queue';
 import { UserRepositoryCosmosDb, UserService, UserServiceImpl } from '../domain/user';
 import { MemoryRepositoryPinecone, MemoryService, MemoryServiceImpl } from '../domain/memory';
 
@@ -94,6 +96,11 @@ export function buildContainer(config: Config): Container {
 
   const exceptionProvider = new ExceptionProviderSentry();
 
+  const queueServiceClient = QueueServiceClient.fromConnectionString(config.storageConnectionString);
+  const queueClient = queueServiceClient.getQueueClient(config.queueName);
+
+  const queueProvider = new QueueProviderAzure({ client: queueClient });
+
   return {
     config,
     userService,
@@ -104,6 +111,7 @@ export function buildContainer(config: Config): Container {
     parameterProvider,
     chatProvider,
     exceptionProvider,
+    queueProvider,
   };
 }
 
@@ -117,4 +125,5 @@ export type Container = {
   parameterProvider: ParameterProvider;
   chatProvider: ChatProvider;
   exceptionProvider: ExceptionProvider;
+  queueProvider: QueueProvider;
 };
