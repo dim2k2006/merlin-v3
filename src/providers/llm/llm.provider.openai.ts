@@ -28,8 +28,14 @@ class LlmProviderOpenai implements LlmProvider {
       messages: input.messages,
     });
 
+    const choice = response.choices[0];
+
+    if (!choice) {
+      throw new Error('Failed to generate completion');
+    }
+
     return {
-      content: response.choices[0].message.content ?? '',
+      content: choice.message.content ?? '',
     };
   }
 
