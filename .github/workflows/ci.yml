@@ -1,0 +1,61 @@
+name: Code Quality Checks
+
+# Define the events that trigger the workflow
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - '**' # Triggers on PRs targeting any branch
+  push:
+    branches-ignore:
+      - main # Excludes pushes to the main branch
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.18.3]
+
+    steps:
+      # 1. Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # 2. Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # 3. Cache Node Modules
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.node-version }}-
+
+      # 4. Install Dependencies
+      - name: Install Dependencies
+        run: make install
+
+      # 5. Run ESLint
+      - name: Run ESLint
+        run: make lint
+
+      # 6. Run Prettier Check
+      - name: Run Prettier Check
+        run: make prettier
+
+      # 7. Run Type Checking
+      - name: Run Type Checking
+        run: make check-types
+
+      # 8. Run Tests
+      - name: Run Tests
+        run: make test-ci
