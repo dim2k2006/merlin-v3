@@ -3,6 +3,12 @@ import { HttpResponseInit } from '@azure/functions';
 
 export function makeDebugSentryHandler(container: Container) {
   return async function debugSentry(): Promise<HttpResponseInit> {
-    throw new Error(`My first Sentry error from ${container.config.cosmosDbName}!`);
+    try {
+      throw new Error(`My first Sentry error from ${container.config.cosmosDbName}!`);
+    } catch (error) {
+      container.exceptionProvider.captureException(error, 'Failed to debug Sentry.');
+
+      throw error;
+    }
   };
 }
