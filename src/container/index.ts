@@ -7,6 +7,7 @@ import { ParameterProvider, ParameterProviderCorrelate } from '../providers/para
 import { ChatProvider, ChatProviderTelegram } from '../providers/chat';
 import { ExceptionProvider, ExceptionProviderSentry } from '../providers/exception';
 import { QueueProvider, QueueProviderAzure } from '../providers/queue';
+import { TextCleanerProvider, TextCleanerProviderLlm } from '../providers/textCleaner';
 import { UserRepositoryCosmosDb, UserService, UserServiceImpl } from '../domain/user';
 import { MemoryRepositoryPinecone, MemoryService, MemoryServiceImpl } from '../domain/memory';
 
@@ -101,6 +102,8 @@ export function buildContainer(config: Config): Container {
 
   const queueProvider = new QueueProviderAzure({ client: queueClient });
 
+  const textCleanerProvider = new TextCleanerProviderLlm({ llmProvider });
+
   return {
     config,
     userService,
@@ -112,6 +115,7 @@ export function buildContainer(config: Config): Container {
     chatProvider,
     exceptionProvider,
     queueProvider,
+    textCleanerProvider,
   };
 }
 
@@ -126,4 +130,5 @@ export type Container = {
   chatProvider: ChatProvider;
   exceptionProvider: ExceptionProvider;
   queueProvider: QueueProvider;
+  textCleanerProvider: TextCleanerProvider;
 };
