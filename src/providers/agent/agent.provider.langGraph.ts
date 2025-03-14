@@ -70,8 +70,13 @@ POLICY:
   }
 
   async invoke(input: AgentInvokeInput, options?: AgentInvokeOptions): Promise<AgentResponse> {
+    const userInfoMessage = this.buildChatMessage({
+      role: 'developer',
+      content: `User Info: id=${input.user.id}, externalId=${input.user.externalId}, firstName=${input.user.firstName}, lastName=${input.user.lastName}.`,
+    });
+
     const agentState = await this.agent.invoke(
-      { messages: input.messages },
+      { messages: [userInfoMessage, ...input.messages] },
       { configurable: { thread_id: options?.threadId } },
     );
 

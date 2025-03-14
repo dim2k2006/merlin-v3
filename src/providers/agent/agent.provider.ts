@@ -1,3 +1,5 @@
+import { User } from '../../domain/user';
+
 export interface AgentProvider {
   invoke(input: AgentInvokeInput, options?: AgentInvokeOptions): Promise<AgentResponse>;
   buildChatMessage(input: BuildChatMessageInput): ChatMessage;
@@ -5,6 +7,7 @@ export interface AgentProvider {
 
 export type AgentInvokeInput = {
   messages: ChatMessage[];
+  user: User;
 };
 
 export type AgentInvokeOptions = {
