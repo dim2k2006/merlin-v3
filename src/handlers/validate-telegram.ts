@@ -1,5 +1,5 @@
 import { Container } from '../container';
-import { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { HttpRequest, HttpResponseInit } from '@azure/functions';
 import { z } from 'zod';
 import crypto from 'crypto';
 import get from 'lodash/get';
