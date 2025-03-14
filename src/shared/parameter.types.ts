@@ -41,6 +41,7 @@ type ParameterType = 'float';
 export type CreateMeasurementInput = {
   parameterId: string;
   notes?: string;
+  timestamp?: string;
   value: unknown;
 };
 

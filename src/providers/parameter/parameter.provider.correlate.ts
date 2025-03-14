@@ -153,6 +153,7 @@ class ParameterProviderCorrelate implements ParameterProvider {
         parameterId: input.parameterId,
         notes: input.notes,
         value: input.value,
+        timestamp: input.timestamp,
       });
 
       const result = MeasurementResponseSchema.parse(response.data);
