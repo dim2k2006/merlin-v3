@@ -1,4 +1,5 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { SystemMessage } from '@langchain/core/messages';
 import { ChatOpenAI } from '@langchain/openai';
 import { MemorySaver } from '@langchain/langgraph';
 import { DynamicStructuredTool } from '@langchain/core/tools';
@@ -46,6 +47,25 @@ class AgentProviderLangGraph implements AgentProvider {
       llm: agentModel,
       tools: agentTools,
       checkpointSaver: agentCheckpointer,
+      prompt: new SystemMessage({
+        content: `
+You are a retrieval-based assistant with the following tools:
+1) saveMemory: use it to save new pieces of user memory
+2) retrieveMemories: use it to retrieve previously saved data
+3) getParameterServiceUser: use it to retrieve a user from the parameter service
+4) createParameter: use it to create a new parameter in the parameter service
+5) listMyParameters: use it to list all parameters for the current user
+6) createMeasurement: use it to create a new measurement for a specified parameter
+7) listMeasurementsByParameter: use it to list all measurements for a given parameter
+
+POLICY:
+1) If the user asks any factual question or requests data that might exist in memory or parameters, you MUST first try the relevant tools (e.g. retrieveMemories, listMyParameters, etc.).
+2) If you find relevant data from the tools, use it to form your final answer.
+3) Only if the user explicitly requests a creative opinion/story OR the tools return no relevant data, you may generate an answer from your own knowledge.
+4) Do not invent data that could be retrieved via a tool.
+5) In your final answer, add "Tools Used:" plus any tools actually used. If no tools were used, write "none".
+`,
+      }),
     });
   }
 
