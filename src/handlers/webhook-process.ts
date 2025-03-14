@@ -60,8 +60,7 @@ export function makeWebhookProcessHandler(container: Container) {
 User's message: "${message}".
 Error details: "${errorMessage}".
 Please provide a clear, concise explanation of the error in plain language that a non-technical user can understand.
-Also, suggest what the user might do next, such as trying again later or contacting support if the problem persists.
-At the end, add a line "Tools Used:" and list any tools that were involved in handling this request. If no tools were used, output "none".`,
+Also, suggest what the user might do next, such as trying again later or contacting support if the problem persists.`,
               }),
             ],
             user,
