@@ -5,6 +5,7 @@ import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { MemoryService } from '../../domain/memory';
 import { ParameterProvider } from '../../shared/parameter.types';
+import { TextCleanerProvider } from '../../shared/textCleaner.types';
 import {
   AgentProvider,
   AgentInvokeInput,
@@ -18,6 +19,7 @@ type ConstructorInput = {
   apiKey: string;
   memoryService: MemoryService;
   parameterProvider: ParameterProvider;
+  textCleanerProvider: TextCleanerProvider;
 };
 
 class AgentProviderLangGraph implements AgentProvider {
@@ -27,10 +29,14 @@ class AgentProviderLangGraph implements AgentProvider {
 
   private parameterProvider: ParameterProvider;
 
-  constructor({ apiKey, memoryService, parameterProvider }: ConstructorInput) {
+  private textCleanerProvider: TextCleanerProvider;
+
+  constructor({ apiKey, memoryService, parameterProvider, textCleanerProvider }: ConstructorInput) {
     this.memoryService = memoryService;
 
     this.parameterProvider = parameterProvider;
+
+    this.textCleanerProvider = textCleanerProvider;
 
     const agentTools = this.buildTools();
     const agentModel = new ChatOpenAI({ model: 'gpt-4o-mini', temperature: 0, apiKey });
@@ -71,7 +77,9 @@ class AgentProviderLangGraph implements AgentProvider {
       }),
       func: async ({ userId, content }: { userId: string; content: string }) => {
         try {
-          await this.memoryService.saveMemory({ userId, content });
+          const cleanContent = await this.textCleanerProvider.extractMemoryText(content);
+
+          await this.memoryService.saveMemory({ userId, content: cleanContent });
           return 'Memory saved successfully!';
         } catch (error) {
           return `Error saving memory: ${error}`;
@@ -91,7 +99,9 @@ class AgentProviderLangGraph implements AgentProvider {
       }),
       func: async ({ userId, content, k }: { userId: string; content: string; k: number }) => {
         try {
-          const result = await this.memoryService.findRelevantMemories({ userId, content, k });
+          const cleanContent = await this.textCleanerProvider.extractSearchQuery(content);
+
+          const result = await this.memoryService.findRelevantMemories({ userId, content: cleanContent, k });
 
           return result;
         } catch (error) {
