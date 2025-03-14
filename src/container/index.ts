@@ -7,6 +7,7 @@ import { ParameterProvider, ParameterProviderCorrelate } from '../providers/para
 import { ChatProvider, ChatProviderTelegram } from '../providers/chat';
 import { ExceptionProvider, ExceptionProviderSentry } from '../providers/exception';
 import { QueueProvider, QueueProviderAzure } from '../providers/queue';
+import { TextCleanerProvider, TextCleanerProviderLlm } from '../providers/textCleaner';
 import { UserRepositoryCosmosDb, UserService, UserServiceImpl } from '../domain/user';
 import { MemoryRepositoryPinecone, MemoryService, MemoryServiceImpl } from '../domain/memory';
 
@@ -90,7 +91,14 @@ export function buildContainer(config: Config): Container {
 
   const parameterProvider = new ParameterProviderCorrelate({ apiKey: config.correlateApiKey });
 
-  const agentProvider = new AgentProviderLangGraph({ apiKey: config.openaiApiKey, memoryService, parameterProvider });
+  const textCleanerProvider = new TextCleanerProviderLlm({ llmProvider });
+
+  const agentProvider = new AgentProviderLangGraph({
+    apiKey: config.openaiApiKey,
+    memoryService,
+    parameterProvider,
+    textCleanerProvider,
+  });
 
   const chatProvider = new ChatProviderTelegram({ botToken: config.telegramBotToken });
 
@@ -112,6 +120,7 @@ export function buildContainer(config: Config): Container {
     chatProvider,
     exceptionProvider,
     queueProvider,
+    textCleanerProvider,
   };
 }
 
@@ -126,4 +135,5 @@ export type Container = {
   chatProvider: ChatProvider;
   exceptionProvider: ExceptionProvider;
   queueProvider: QueueProvider;
+  textCleanerProvider: TextCleanerProvider;
 };

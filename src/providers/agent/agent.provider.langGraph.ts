@@ -1,10 +1,12 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { SystemMessage } from '@langchain/core/messages';
 import { ChatOpenAI } from '@langchain/openai';
 import { MemorySaver } from '@langchain/langgraph';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { MemoryService } from '../../domain/memory';
 import { ParameterProvider } from '../../shared/parameter.types';
+import { TextCleanerProvider } from '../../shared/textCleaner.types';
 import {
   AgentProvider,
   AgentInvokeInput,
@@ -18,6 +20,7 @@ type ConstructorInput = {
   apiKey: string;
   memoryService: MemoryService;
   parameterProvider: ParameterProvider;
+  textCleanerProvider: TextCleanerProvider;
 };
 
 class AgentProviderLangGraph implements AgentProvider {
@@ -27,10 +30,14 @@ class AgentProviderLangGraph implements AgentProvider {
 
   private parameterProvider: ParameterProvider;
 
-  constructor({ apiKey, memoryService, parameterProvider }: ConstructorInput) {
+  private textCleanerProvider: TextCleanerProvider;
+
+  constructor({ apiKey, memoryService, parameterProvider, textCleanerProvider }: ConstructorInput) {
     this.memoryService = memoryService;
 
     this.parameterProvider = parameterProvider;
+
+    this.textCleanerProvider = textCleanerProvider;
 
     const agentTools = this.buildTools();
     const agentModel = new ChatOpenAI({ model: 'gpt-4o-mini', temperature: 0, apiKey });
@@ -40,12 +47,60 @@ class AgentProviderLangGraph implements AgentProvider {
       llm: agentModel,
       tools: agentTools,
       checkpointSaver: agentCheckpointer,
+      prompt: new SystemMessage({
+        content: `
+You are a retrieval-based assistant with the following tools:
+1) saveMemory: use it to save new pieces of user memory
+2) retrieveMemories: use it to retrieve previously saved data
+3) getParameterServiceUser: use it to retrieve a user from the parameter service
+4) createParameter: use it to create a new parameter in the parameter service
+5) listMyParameters: use it to list all parameters for the current user
+6) createMeasurement: use it to create a new measurement for a specified parameter
+7) listMeasurementsByParameter: use it to list all measurements for a given parameter
+
+POLICY:
+1) For ANY factual question or request about personal/user data that might exist in memory or parameters, you MUST first use the relevant tools (like retrieveMemories or listMyParameters).
+2) If you find relevant data, use it in your final answer.
+3) Only if the user explicitly wants a creative opinion/story OR the tools return no relevant data, you may generate from your own knowledge.
+4) Do NOT invent data that could be retrieved via a tool.
+5) At the end, add "Tools Used:" plus the names of any tools used. If no tools used, write "none".
+
+FEW-SHOT EXAMPLES:
+
+EXAMPLE 1:
+User: "Сколько лет бабуле?"
+Assistant's reasoning: "This is a factual question about the user's relative (grandmother). Possibly stored in memory. We must call retrieveMemories."
+- Step: Call retrieveMemories with the query "сколько лет бабуле"
+- Suppose the tool returns: "Она родилась 27 декабря 1938 года, значит ей 84 года."
+Assistant (final answer): "Ей 84 года."
+Tools Used: retrieveMemories
+
+EXAMPLE 2:
+User: "Расскажи короткую историю про космос."
+Assistant's reasoning: "User wants a creative request, no direct factual data in memory. Tools not relevant."
+Assistant (final answer): "Жил-был один астронавт..."
+Tools Used: none
+
+EXAMPLE 3:
+User: "Что я говорил о своем отпуске?"
+Assistant's reasoning: "Factual data about user's personal info. Must call retrieveMemories."
+- Step: retrieveMemories with query "что я говорил о своем отпуске?"
+- Suppose tool returns: "Вы говорили, что поедете в Португалию и возьмёте с собой доску для серфинга."
+Assistant: "Ранее вы упоминали, что собираетесь в Португалию серфить..."
+Tools Used: retrieveMemories
+`,
+      }),
     });
   }
 
   async invoke(input: AgentInvokeInput, options?: AgentInvokeOptions): Promise<AgentResponse> {
+    const userInfoMessage = this.buildChatMessage({
+      role: 'developer',
+      content: `User Info: id=${input.user.id}, externalId=${input.user.externalId}, firstName=${input.user.firstName}, lastName=${input.user.lastName}.`,
+    });
+
     const agentState = await this.agent.invoke(
-      { messages: input.messages },
+      { messages: [userInfoMessage, ...input.messages] },
       { configurable: { thread_id: options?.threadId } },
     );
 
@@ -71,7 +126,9 @@ class AgentProviderLangGraph implements AgentProvider {
       }),
       func: async ({ userId, content }: { userId: string; content: string }) => {
         try {
-          await this.memoryService.saveMemory({ userId, content });
+          const cleanContent = await this.textCleanerProvider.extractMemoryText(content);
+
+          await this.memoryService.saveMemory({ userId, content: cleanContent });
           return 'Memory saved successfully!';
         } catch (error) {
           return `Error saving memory: ${error}`;
@@ -91,7 +148,9 @@ class AgentProviderLangGraph implements AgentProvider {
       }),
       func: async ({ userId, content, k }: { userId: string; content: string; k: number }) => {
         try {
-          const result = await this.memoryService.findRelevantMemories({ userId, content, k });
+          const cleanContent = await this.textCleanerProvider.extractSearchQuery(content);
+
+          const result = await this.memoryService.findRelevantMemories({ userId, content: cleanContent, k });
 
           return result;
         } catch (error) {
