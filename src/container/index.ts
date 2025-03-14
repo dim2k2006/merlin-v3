@@ -91,7 +91,14 @@ export function buildContainer(config: Config): Container {
 
   const parameterProvider = new ParameterProviderCorrelate({ apiKey: config.correlateApiKey });
 
-  const agentProvider = new AgentProviderLangGraph({ apiKey: config.openaiApiKey, memoryService, parameterProvider });
+  const textCleanerProvider = new TextCleanerProviderLlm({ llmProvider });
+
+  const agentProvider = new AgentProviderLangGraph({
+    apiKey: config.openaiApiKey,
+    memoryService,
+    parameterProvider,
+    textCleanerProvider,
+  });
 
   const chatProvider = new ChatProviderTelegram({ botToken: config.telegramBotToken });
 
@@ -101,8 +108,6 @@ export function buildContainer(config: Config): Container {
   const queueClient = queueServiceClient.getQueueClient(config.queueName);
 
   const queueProvider = new QueueProviderAzure({ client: queueClient });
-
-  const textCleanerProvider = new TextCleanerProviderLlm({ llmProvider });
 
   return {
     config,
